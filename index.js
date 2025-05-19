@@ -1,10 +1,11 @@
+require('dotenv').config()
+
 const express = require('express')
 const app = express()
 const cors = require('cors')
-require('dotenv').config()
-console.log('MONGO_URI:', process.env.MONGO_URI);
+
 const mongoose = require('mongoose')
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI)
 
 app.use(cors())
 app.use(express.static('public'))
@@ -14,17 +15,14 @@ app.get('/', (req, res) => {
 });
 
 const userSchema = new mongoose.Schema({
-  username: {type: String, required: true}
+  username: {type: String, required: true, unique:true }
 })
 
-
 const exerciseSchema = new mongoose.Schema({
-  username: String,
   description: String,
   duration: Number,
   date: Date
 })
-
 
 const logSchema = new mongoose.Schema({
   username: String,
@@ -38,7 +36,28 @@ const logModel = mongoose.model('Log', logSchema);
 app.post('/api/users', async (req, res) => {
   const user = new userModel({ username: req.body.username });
   await user.save();
-  res.json(user);
+  res.json({username: user.username, _id: user.id});
+});
+
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await userModel.find({}, 'username _id');
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Помилка сервера' });
+  }
+});
+
+app.post('/api/users/:_id/exercises', async (req, res) => {
+  const exercise = new exerciseModel({ _id: req.body._id, description: req.body.description, duration: req.body.duration, date: req.body.date });
+  await exercise.save();
+  date = exercise.date;
+  if(date){
+    date.toDateString()
+  }
+  else{date= new Date().toDateString()}
+  res.json({_id: exercise.id, description: exercise.description, duration: exercise.duration, date: date});
 });
 
 
