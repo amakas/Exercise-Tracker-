@@ -28,7 +28,7 @@ const exerciseSchema = new mongoose.Schema({
 
 
 const userModel = mongoose.model('User', userSchema);
-const exerciseModel = mongoose.model('Exerсise', exerciseSchema);
+const exerciseModel = mongoose.model('Exercise', exerciseSchema);
 
 
 app.post('/api/users', async (req, res) => {
@@ -63,18 +63,20 @@ app.get('/api/users', async (req, res) => {
 
 app.post('/api/users/:_id/exercises', async (req, res) => {
   let date = req.body.date;
+  const id = req.params._id;
+
   if(date){
    date = new Date(date).toDateString()
   }
   else{date= new Date().toDateString()}
-  
+  const user = await userModel.findById({_id: id })
   const exercise = new exerciseModel({ userId: req.params._id, description: req.body.description, duration: req.body.duration, date: date });
   await exercise.save();
   
-  res.json({ _id: exercise.userId, description: exercise.description, duration: exercise.duration, date: date});
+  res.json({ username: user.username, description: exercise.description, duration: exercise.duration, date: date ,_id: exercise.userId});
 });
 
-app.get('/api/users/:_id/logs?[from][&to][&limit]', async(req,res)=>{
+app.get('/api/users/:_id/logs', async(req,res)=>{
   try{
     const from = req.query.from;
     const to = req.query.to;
